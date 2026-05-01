@@ -1,5 +1,7 @@
 # enoch-mcp
 
+<!-- mcp-name: io.github.alias8818/enoch -->
+
 `enoch-mcp` is a local [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) stdio server for the Enoch FastAPI control-plane API. It lets MCP clients such as Claude Desktop, Cursor, Copilot, and Windsurf inspect and operate a running Enoch instance through tools.
 
 This MCP server is built for the Enoch project: [`alias8818/enoch-agentic-research-system`](https://github.com/alias8818/enoch-agentic-research-system).
