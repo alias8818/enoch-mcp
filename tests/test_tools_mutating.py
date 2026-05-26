@@ -18,10 +18,16 @@ class FakeClient:
 async def test_mutating_endpoint_mapping_and_safe_defaults() -> None:
     client = FakeClient()
     await tools.enoch_dispatch(client, requested_by="me")
+    await tools.enoch_dispatch_one(client, project_id="project-1", requested_by="me")
+    await tools.enoch_queue_alert_check(client, requested_by="me")
+    await tools.enoch_reconcile_stale_lane(client, requested_by="me", lane_key="cpu_worker")
+    await tools.enoch_research_run_cycle(client, requested_by="me")
+    await tools.enoch_launch_followup(client, project_id="project-1")
     await tools.enoch_pause(client, reason="maintenance")
     await tools.enoch_resume(client)
     await tools.enoch_preflight(client)
     await tools.enoch_intake_notion(client, ideas=[{"title": "x"}])
+    await tools.enoch_intake_ideas(client, ideas=[{"title": "x"}])
     await tools.enoch_review_claim(client, "p1", "me")
     await tools.enoch_review_checklist(client, "p1", "i1", "pass", note="ok")
     await tools.enoch_review_status(client, "p1", "approved")
@@ -31,10 +37,16 @@ async def test_mutating_endpoint_mapping_and_safe_defaults() -> None:
     paths = [path for path, _json in client.calls]
     assert paths == [
         "/control/dispatch-next",
+        "/control/dispatch-one",
+        "/control/api/alerts/queue-check",
+        "/control/api/alerts/queue-check",
+        "/control/api/research/run-cycle",
+        "/control/api/v1/followups/launch-next",
         "/control/pause",
         "/control/resume",
         "/control/worker/preflight",
         "/control/intake/notion-ideas",
+        "/control/intake/ideas",
         "/control/api/paper-reviews/p1/claim",
         "/control/api/paper-reviews/p1/checklist/i1",
         "/control/api/paper-reviews/p1/status",
@@ -42,5 +54,13 @@ async def test_mutating_endpoint_mapping_and_safe_defaults() -> None:
         "/control/api/paper-reviews/p1/rewrite-draft",
     ]
     assert client.calls[0][1]["dry_run"] is True
+    assert client.calls[1][1]["dry_run"] is True
+    assert client.calls[2][1]["dry_run"] is True
+    assert client.calls[3][1]["dry_run"] is True
+    assert client.calls[3][1]["lane_key"] == "cpu_worker"
     assert client.calls[4][1]["dry_run"] is True
-    assert client.calls[3][1] == {}
+    assert client.calls[5][1]["dry_run"] is True
+    assert client.calls[8][1] == {}
+    assert client.calls[9][1]["dry_run"] is True
+    assert client.calls[10][1]["dry_run"] is True
+    assert client.calls[14][1]["dry_run"] is True

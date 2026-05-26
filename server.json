@@ -3,7 +3,7 @@
   "name": "io.github.alias8818/enoch",
   "title": "Enoch",
   "description": "Operate an Enoch control plane through MCP tools",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "websiteUrl": "https://github.com/alias8818/enoch-mcp",
   "repository": {
     "url": "https://github.com/alias8818/enoch-mcp",
@@ -14,7 +14,7 @@
     {
       "registryType": "pypi",
       "identifier": "enoch-mcp",
-      "version": "0.1.1",
+      "version": "0.1.3",
       "runtimeHint": "uvx",
       "transport": {
         "type": "stdio"
@@ -34,6 +34,20 @@
           "format": "string",
           "isRequired": true,
           "isSecret": true
+        },
+        {
+          "name": "ENOCH_WORKER_PROBES_JSON",
+          "description": "Optional JSON map for direct worker diagnostics.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "ENOCH_WORKER_PROBES_FILE",
+          "description": "Optional path to a JSON map for direct worker diagnostics.",
+          "format": "string",
+          "isRequired": false,
+          "isSecret": false
         }
       ]
     }

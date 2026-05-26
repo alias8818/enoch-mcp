@@ -64,6 +64,77 @@ def create_server(config: EnochMCPConfig, client_factory: ClientFactory | None =
         """Queue health with worker freshness, alert findings, active runs, and recent events."""
         return await call_tool(readonly.enoch_queue_health, refresh_worker=refresh_worker)
 
+    @mcp.tool(annotations=readonly_annotations("Enoch Overview"))
+    async def enoch_overview(active_limit: int = 5, event_limit: int = 10) -> Any:
+        """Bounded Dashboard V1 overview: operator counts, lanes, papers, top actions, events."""
+        return await call_tool(
+            readonly.enoch_overview, active_limit=active_limit, event_limit=event_limit
+        )
+
+    @mcp.tool(annotations=readonly_annotations("Enoch Automation Readiness"))
+    async def enoch_automation_readiness() -> Any:
+        """Canonical long-haul readiness check used to answer whether Enoch can run unattended."""
+        return await call_tool(readonly.enoch_automation_readiness)
+
+    @mcp.tool(annotations=readonly_annotations("Enoch Research Quality"))
+    async def enoch_research_quality() -> Any:
+        """Latest research quality readiness report."""
+        return await call_tool(readonly.enoch_research_quality)
+
+    @mcp.tool(annotations=readonly_annotations("Enoch Intake Status"))
+    async def enoch_intake_status(
+        page_size: int = 50, include_latest_payload: bool = False
+    ) -> Any:
+        """Current control-plane idea intake status."""
+        return await call_tool(
+            readonly.enoch_intake_status,
+            page_size=page_size,
+            include_latest_payload=include_latest_payload,
+        )
+
+    @mcp.tool(annotations=readonly_annotations("Enoch Lanes"))
+    async def enoch_lanes() -> Any:
+        """Bounded worker lane state and lane-aware next candidate."""
+        return await call_tool(readonly.enoch_lanes)
+
+    @mcp.tool(annotations=readonly_annotations("Enoch Probe Worker"))
+    async def enoch_probe_worker(
+        lane: readonly.WorkerLane | None = None,
+        run_id: str | None = None,
+    ) -> Any:
+        """Optional direct worker probe: health, wake-gate status, processes, and disk."""
+        return await call_tool(readonly.enoch_probe_worker, lane=lane, run_id=run_id)
+
+    @mcp.tool(annotations=readonly_annotations("Enoch Worker Logs"))
+    async def enoch_worker_logs(
+        lane: readonly.WorkerLane | None = None,
+        log_kind: readonly.WorkerLogKind = "service",
+        run_id: str | None = None,
+        lines: int = 80,
+    ) -> Any:
+        """Optional bounded worker log tail from allowlisted log sources."""
+        return await call_tool(
+            readonly.enoch_worker_logs,
+            lane=lane,
+            log_kind=log_kind,
+            run_id=run_id,
+            lines=lines,
+        )
+
+    @mcp.tool(annotations=readonly_annotations("Enoch Worker Artifacts"))
+    async def enoch_worker_artifacts(
+        lane: readonly.WorkerLane | None = None,
+        project_id: str | None = None,
+        run_id: str | None = None,
+    ) -> Any:
+        """Optional expected artifact presence check for a worker project/run."""
+        return await call_tool(
+            readonly.enoch_worker_artifacts,
+            lane=lane,
+            project_id=project_id,
+            run_id=run_id,
+        )
+
     @mcp.tool(annotations=readonly_annotations("Enoch Queue List"))
     async def enoch_queue_list(
         status: readonly.QueueStatus, search: str | None = None, page_size: int = 100
@@ -72,6 +143,76 @@ def create_server(config: EnochMCPConfig, client_factory: ClientFactory | None =
         return await call_tool(
             readonly.enoch_queue_list, status, search=search, page_size=page_size
         )
+
+    @mcp.tool(annotations=readonly_annotations("Enoch V1 Queue"))
+    async def enoch_v1_queue(
+        queue: readonly.V1Queue = "all",
+        status: str = "",
+        search: str = "",
+        cursor: str = "",
+        page_size: int = 50,
+        sort: str = "priority",
+    ) -> Any:
+        """Bounded Dashboard V1 queue list with cursor pagination."""
+        return await call_tool(
+            readonly.enoch_v1_queue,
+            queue=queue,
+            status=status,
+            search=search,
+            cursor=cursor,
+            page_size=page_size,
+            sort=sort,
+        )
+
+    @mcp.tool(annotations=readonly_annotations("Enoch Projects"))
+    async def enoch_projects(
+        status: str = "",
+        search: str = "",
+        cursor: str = "",
+        page_size: int = 50,
+        sort: str = "recent",
+    ) -> Any:
+        """Bounded Dashboard V1 project list."""
+        return await call_tool(
+            readonly.enoch_projects,
+            status=status,
+            search=search,
+            cursor=cursor,
+            page_size=page_size,
+            sort=sort,
+        )
+
+    @mcp.tool(annotations=readonly_annotations("Enoch Project Detail"))
+    async def enoch_project_detail(project_id: str, event_limit: int = 50) -> Any:
+        """Bounded project detail with related queue/run/paper rows and events."""
+        return await call_tool(
+            readonly.enoch_project_detail, project_id, event_limit=event_limit
+        )
+
+    @mcp.tool(annotations=readonly_annotations("Enoch Runs"))
+    async def enoch_runs(
+        state: str = "",
+        project_id: str = "",
+        search: str = "",
+        cursor: str = "",
+        page_size: int = 50,
+        sort: str = "recent",
+    ) -> Any:
+        """Bounded Dashboard V1 run list."""
+        return await call_tool(
+            readonly.enoch_runs,
+            state=state,
+            project_id=project_id,
+            search=search,
+            cursor=cursor,
+            page_size=page_size,
+            sort=sort,
+        )
+
+    @mcp.tool(annotations=readonly_annotations("Enoch Run Detail"))
+    async def enoch_run_detail(run_id: str, event_limit: int = 50) -> Any:
+        """Bounded run detail with related queue/paper rows and events."""
+        return await call_tool(readonly.enoch_run_detail, run_id, event_limit=event_limit)
 
     @mcp.tool(annotations=readonly_annotations("Enoch Papers List"))
     async def enoch_papers_list(
@@ -128,22 +269,28 @@ def create_server(config: EnochMCPConfig, client_factory: ClientFactory | None =
 
     @mcp.tool(annotations=readonly_annotations("Enoch Events"))
     async def enoch_events(
+        event_id: str | None = None,
         entity_type: str | None = None,
         entity_id: str | None = None,
         event_type: str | None = None,
         search: str | None = None,
-        page: int = 1,
-        page_size: int = 100,
+        cursor: str = "",
+        page_size: int = 50,
+        include_payload: bool = False,
+        sort: str = "recent",
     ) -> Any:
-        """Query the Enoch event log."""
+        """Query the bounded Dashboard V1 event log."""
         return await call_tool(
             readonly.enoch_events,
+            event_id=event_id,
             entity_type=entity_type,
             entity_id=entity_id,
             event_type=event_type,
             search=search,
-            page=page,
+            cursor=cursor,
             page_size=page_size,
+            include_payload=include_payload,
+            sort=sort,
         )
 
     @mcp.tool(annotations=readonly_annotations("Enoch Core Health"))
@@ -176,6 +323,113 @@ def create_server(config: EnochMCPConfig, client_factory: ClientFactory | None =
             requested_by=requested_by,
             dry_run=dry_run,
             force_preflight=force_preflight,
+        )
+
+    @mcp.tool(
+        annotations=mutating_annotations("Enoch Dispatch One", destructive=False),
+        meta={"userApproval": "required"},
+    )
+    async def enoch_dispatch_one(
+        project_id: str,
+        requested_by: str,
+        dry_run: bool = True,
+        force_preflight: bool = True,
+    ) -> Any:
+        """Dispatch one explicit queued project. Defaults to dry_run=True."""
+        return await call_tool(
+            mutating.enoch_dispatch_one,
+            project_id,
+            requested_by=requested_by,
+            dry_run=dry_run,
+            force_preflight=force_preflight,
+        )
+
+    @mcp.tool(
+        annotations=mutating_annotations("Enoch Queue Alert Check", destructive=False),
+        meta={"userApproval": "required"},
+    )
+    async def enoch_queue_alert_check(
+        requested_by: str,
+        dry_run: bool = True,
+        refresh_worker: bool = True,
+        force_notify: bool = False,
+        lane_key: str | None = None,
+        machine_target: str | None = None,
+        project_id: str | None = None,
+        run_id: str | None = None,
+    ) -> Any:
+        """Run queue alert/stale-active reconciliation. Defaults to dry_run=True."""
+        return await call_tool(
+            mutating.enoch_queue_alert_check,
+            requested_by=requested_by,
+            dry_run=dry_run,
+            refresh_worker=refresh_worker,
+            force_notify=force_notify,
+            lane_key=lane_key,
+            machine_target=machine_target,
+            project_id=project_id,
+            run_id=run_id,
+        )
+
+    @mcp.tool(
+        annotations=mutating_annotations("Enoch Reconcile Stale Lane", destructive=False),
+        meta={"userApproval": "required"},
+    )
+    async def enoch_reconcile_stale_lane(
+        requested_by: str,
+        dry_run: bool = True,
+        refresh_worker: bool = True,
+        lane_key: str | None = None,
+        machine_target: str | None = None,
+        project_id: str | None = None,
+        run_id: str | None = None,
+    ) -> Any:
+        """Explain or reconcile one stale active lane. Defaults to dry_run=True."""
+        return await call_tool(
+            mutating.enoch_reconcile_stale_lane,
+            requested_by=requested_by,
+            dry_run=dry_run,
+            refresh_worker=refresh_worker,
+            lane_key=lane_key,
+            machine_target=machine_target,
+            project_id=project_id,
+            run_id=run_id,
+        )
+
+    @mcp.tool(
+        annotations=mutating_annotations("Enoch Research Run Cycle", destructive=False),
+        meta={"userApproval": "required"},
+    )
+    async def enoch_research_run_cycle(
+        requested_by: str,
+        dry_run: bool = True,
+        refresh_worker: bool = True,
+    ) -> Any:
+        """Run one bounded research autopilot cycle. Defaults to dry_run=True."""
+        return await call_tool(
+            mutating.enoch_research_run_cycle,
+            requested_by=requested_by,
+            dry_run=dry_run,
+            refresh_worker=refresh_worker,
+        )
+
+    @mcp.tool(
+        annotations=mutating_annotations("Enoch Launch Follow-up", destructive=False),
+        meta={"userApproval": "required"},
+    )
+    async def enoch_launch_followup(
+        project_id: str = "",
+        requested_by: str = "mcp",
+        dry_run: bool = True,
+        max_followup_depth: int = 4,
+    ) -> Any:
+        """Launch the next bounded follow-up candidate. Defaults to dry_run=True."""
+        return await call_tool(
+            mutating.enoch_launch_followup,
+            project_id=project_id,
+            requested_by=requested_by,
+            dry_run=dry_run,
+            max_followup_depth=max_followup_depth,
         )
 
     @mcp.tool(
@@ -231,6 +485,37 @@ def create_server(config: EnochMCPConfig, client_factory: ClientFactory | None =
         )
 
     @mcp.tool(
+        annotations=mutating_annotations("Enoch Intake Ideas", destructive=False),
+        meta={"userApproval": "required"},
+    )
+    async def enoch_intake_ideas(
+        ideas: list[dict[str, Any]],
+        idempotency_key: str | None = None,
+        source: str = "mcp",
+        dry_run: bool = True,
+        default_machine_target: str | None = None,
+        default_model: str | None = None,
+        default_sandbox: str | None = None,
+        include_statuses: list[str] | None = None,
+        workload_machine_targets: dict[str, str] | None = None,
+        override_existing_dispatch_metadata: bool = False,
+    ) -> Any:
+        """Ingest ideas through the current control-plane intake API. Defaults to dry_run=True."""
+        return await call_tool(
+            mutating.enoch_intake_ideas,
+            ideas=ideas,
+            idempotency_key=idempotency_key,
+            source=source,
+            dry_run=dry_run,
+            default_machine_target=default_machine_target,
+            default_model=default_model,
+            default_sandbox=default_sandbox,
+            include_statuses=include_statuses,
+            workload_machine_targets=workload_machine_targets,
+            override_existing_dispatch_metadata=override_existing_dispatch_metadata,
+        )
+
+    @mcp.tool(
         annotations=mutating_annotations("Enoch Review Claim", destructive=False),
         meta={"userApproval": "required"},
     )
@@ -269,9 +554,13 @@ def create_server(config: EnochMCPConfig, client_factory: ClientFactory | None =
         annotations=mutating_annotations("Enoch Draft Paper", destructive=False),
         meta={"userApproval": "required"},
     )
-    async def enoch_draft_paper(requested_by: str, force: bool = False) -> Any:
-        """Draft the next eligible paper."""
-        return await call_tool(mutating.enoch_draft_paper, requested_by, force=force)
+    async def enoch_draft_paper(
+        requested_by: str, dry_run: bool = True, force: bool = False
+    ) -> Any:
+        """Draft the next eligible paper. Defaults to dry_run=True."""
+        return await call_tool(
+            mutating.enoch_draft_paper, requested_by, dry_run=dry_run, force=force
+        )
 
     @mcp.tool(
         annotations=mutating_annotations("Enoch Rewrite Draft", destructive=False),

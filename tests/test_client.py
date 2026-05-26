@@ -79,3 +79,26 @@ def test_config_env_and_cli(monkeypatch: pytest.MonkeyPatch) -> None:
     config = load_config(["--api-url", "http://cli.test", "--api-token", "cli-token"])
     assert config.api_url == "http://cli.test"
     assert config.api_token == "cli-token"
+
+
+def test_config_loads_worker_probe_json() -> None:
+    config = load_config(
+        [
+            "--api-token",
+            "token",
+            "--worker-probes-json",
+            (
+                '{"cpu": {"api_url": "http://cpu.test:8787", '
+                '"ssh_host": "cpu.example", "ssh_user": "enoch", '
+                '"ssh_port": 2222, "project_root": "/srv/enoch/projects", '
+                '"log_paths": ["/var/log/enoch.log"]}, '
+                '"gpu": {"api_url": "http://gb10.test:8787"}}'
+            ),
+        ]
+    )
+    targets = config.resolved_worker_probe_targets
+    assert sorted(targets) == ["cpu", "gb10"]
+    assert targets["cpu"].ssh_host == "cpu.example"
+    assert targets["cpu"].ssh_port == 2222
+    assert targets["cpu"].log_paths == ("/var/log/enoch.log",)
+    assert targets["gb10"].lane == "gb10"

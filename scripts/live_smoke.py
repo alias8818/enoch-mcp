@@ -73,17 +73,50 @@ async def run_smoke(api_url: str, token: str) -> int:
             return None
 
     await run("enoch_core_health")
+    overview = await run("enoch_overview", {"active_limit": 5, "event_limit": 5})
+    await run("enoch_automation_readiness")
+    await run("enoch_research_quality")
+    await run("enoch_intake_status", {"page_size": 5})
+    lanes = await run("enoch_lanes")
+    if os.environ.get("ENOCH_WORKER_PROBES_JSON") or os.environ.get("ENOCH_WORKER_PROBES_FILE"):
+        await run("enoch_probe_worker", {"lane": "cpu"}, required=False)
+        await run("enoch_probe_worker", {"lane": "gb10"}, required=False)
+        await run(
+            "enoch_worker_logs",
+            {"lane": "gb10", "log_kind": "service", "lines": 20},
+            required=False,
+        )
+    else:
+        print("SKIP worker direct probes no ENOCH_WORKER_PROBES_JSON/FILE configured")
     await run("enoch_status", {"refresh_worker": False})
     await run("enoch_queue_health", {"refresh_worker": False})
     for status in ("active", "queued", "blocked", "paused"):
         await run("enoch_queue_list", {"status": status, "page_size": 5})
+    await run("enoch_v1_queue", {"queue": "all", "page_size": 5})
+    projects = await run("enoch_projects", {"page_size": 5})
+    runs = await run("enoch_runs", {"page_size": 5})
     papers = await run("enoch_papers_list", {"page": 1, "page_size": 5})
     await run("enoch_reviews_list", {"page": 1, "page_size": 5})
     await run("enoch_review_next", required=False)
-    await run("enoch_events", {"page": 1, "page_size": 5})
+    await run("enoch_events", {"page_size": 5})
     await run("enoch_core_queue_projection")
     await run("enoch_core_paper_candidates", {"kind": "draft"}, required=False)
     await run("enoch_core_paper_candidates", {"kind": "polish"}, required=False)
+
+    project = first_item(projects)
+    if project and project.get("project_id"):
+        await run(
+            "enoch_project_detail",
+            {"project_id": str(project["project_id"]), "event_limit": 5},
+        )
+    else:
+        print("SKIP enoch_project_detail no project id found")
+
+    run_item = first_item(runs)
+    if run_item and run_item.get("run_id"):
+        await run("enoch_run_detail", {"run_id": str(run_item["run_id"]), "event_limit": 5})
+    else:
+        print("SKIP enoch_run_detail no run id found")
 
     paper = first_item(papers)
     paper_id = None
@@ -121,10 +154,60 @@ async def run_smoke(api_url: str, token: str) -> int:
         {"requested_by": "enoch-mcp-live-smoke", "dry_run": True, "force_preflight": False},
         required=False,
     )
+    lane_candidate = None
+    for payload in (lanes, overview):
+        payload = unwrap(payload)
+        if isinstance(payload, dict):
+            lane_candidate = payload.get("next_candidate")
+            if isinstance(lane_candidate, dict) and lane_candidate.get("project_id"):
+                break
+            lane_candidate = None
+    if lane_candidate:
+        await run(
+            "enoch_dispatch_one",
+            {
+                "project_id": str(lane_candidate["project_id"]),
+                "requested_by": "enoch-mcp-live-smoke",
+                "dry_run": True,
+            },
+            required=False,
+        )
+    else:
+        print("SKIP enoch_dispatch_one no lane candidate found")
+    await run(
+        "enoch_queue_alert_check",
+        {"requested_by": "enoch-mcp-live-smoke", "dry_run": True, "refresh_worker": False},
+        required=False,
+    )
+    await run(
+        "enoch_reconcile_stale_lane",
+        {"requested_by": "enoch-mcp-live-smoke", "dry_run": True, "refresh_worker": False},
+        required=False,
+    )
+    await run(
+        "enoch_research_run_cycle",
+        {"requested_by": "enoch-mcp-live-smoke", "dry_run": True, "refresh_worker": False},
+        required=False,
+    )
+    await run(
+        "enoch_launch_followup",
+        {"requested_by": "enoch-mcp-live-smoke", "dry_run": True},
+        required=False,
+    )
     await run("enoch_preflight", {"payload": {}}, required=False)
     await run(
         "enoch_intake_notion",
         {"ideas": [], "source": "enoch-mcp-live-smoke", "dry_run": True},
+        required=False,
+    )
+    await run(
+        "enoch_intake_ideas",
+        {"ideas": [], "source": "enoch-mcp-live-smoke", "dry_run": True},
+        required=False,
+    )
+    await run(
+        "enoch_draft_paper",
+        {"requested_by": "enoch-mcp-live-smoke", "dry_run": True},
         required=False,
     )
 
