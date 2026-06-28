@@ -231,8 +231,8 @@ These tools are registered with `readOnlyHint=true`.
 | `enoch_papers_list` | `GET /control/api/papers` | Paginated paper listing. |
 | `enoch_paper_detail` | `GET /control/api/papers/{paper_id}` | Paper detail with related project, run, events, and warnings. |
 | `enoch_paper_artifact` | `GET /control/api/papers/{paper_id}/artifact/{field}` | Artifact content served by the Enoch API. |
-| `enoch_reviews_list` | `GET /control/api/paper-reviews` | Publication review queue. |
-| `enoch_review_next` | `GET /control/api/paper-reviews/next` | Next review candidate. |
+| `enoch_reviews_list` | `GET /control/api/paper-reviews` | Publication automation/detail queue; not a normal human editorial review gate. |
+| `enoch_review_next` | `GET /control/api/paper-reviews/next` | Next publication automation item. |
 | `enoch_events` | `GET /control/api/v1/events` | Cursor-paginated Dashboard V1 event log query. |
 | `enoch_core_health` | `GET /enoch-core/health` | Enoch core health and mode. |
 | `enoch_core_queue_projection` | `GET /enoch-core/projections/queue` | Core queue projection. |
