@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-HOST="${ENOCH_MCP_SSH_HOST:-enoch-core.exe.xyz}"
+HOST="${ENOCH_MCP_SSH_HOST:-control-host}"
 LOCAL_PORT="${ENOCH_MCP_LOCAL_PORT:-18787}"
 REMOTE_PORT="${ENOCH_MCP_REMOTE_PORT:-8787}"
 WORKER_BASE_PORT="${ENOCH_MCP_WORKER_BASE_PORT:-18788}"
