@@ -12,7 +12,7 @@ This package is a thin HTTP bridge. It does not reimplement Enoch business logic
 
 - Registers MCP tools for Enoch control-plane, Dashboard V1, and core endpoints.
 - Sends requests to a configured Enoch API URL.
-- Adds `Authorization: Bearer <token>` to every API request.
+- Adds `Authorization: Bearer ***` to every API request.
 - Returns Enoch API responses to the MCP client.
 - Marks read-only tools with MCP read-only annotations.
 - Marks mutating tools as non-read-only and adds approval metadata.
@@ -91,10 +91,10 @@ Example:
     "service_name": "enoch-control-plane",
     "project_root": "/srv/enoch/projects"
   },
-  "gb10": {
+  "gpu": {
     "api_url": "http://127.0.0.1:18789",
     "api_token": "worker-api-token",
-    "ssh_host": "100.92.44.26",
+    "ssh_host": "worker-gpu.example.internal",
     "ssh_user": "enoch",
     "service_name": "enoch-control-plane",
     "project_root": "/srv/enoch/projects",
@@ -178,31 +178,17 @@ Add an MCP server entry that runs the same stdio command:
 
 Use the equivalent MCP server settings for other clients that support local stdio MCP servers.
 
-### Codex on the Enoch workstation
+### Private operator wrappers
 
-For this workstation, use the repo wrapper so Codex does not store the Enoch
-bearer token directly. The wrapper starts or reuses an SSH tunnel to
-`enoch-core.exe.xyz`, reads the control-plane token on the remote host, and then
-runs this checkout over stdio:
+If you operate a private Enoch deployment, prefer a local wrapper that supplies
+`ENOCH_API_URL` and `ENOCH_API_TOKEN` from your secret store instead of writing a
+bearer token into MCP client config. Keep deployment hostnames, SSH targets,
+private paths, and worker tokens outside public configuration examples.
 
-```toml
-[mcp_servers.enoch]
-command = "/home/jeremy/Desktop/projects/enoch-release/enoch-mcp/scripts/run_codex_mcp.sh"
-startup_timeout_sec = 60.0
-```
-
-The wrapper honors these optional environment overrides:
-
-- `ENOCH_MCP_SSH_HOST` default `enoch-core.exe.xyz`
-- `ENOCH_MCP_LOCAL_PORT` default `18787`
-- `ENOCH_MCP_REMOTE_PORT` default `8787`
-- `ENOCH_MCP_ENABLE_WORKER_PROBES` default `1`
-- `ENOCH_MCP_WORKER_BASE_PORT` default `18788`
-
-When worker probes are enabled, the wrapper reads configured Enoch
-`worker_targets` on `enoch-core`, opens local SSH tunnels for each worker API,
-and exports `ENOCH_WORKER_PROBES_JSON` for this MCP process. The Codex config
-still does not store the control-plane or worker bearer tokens.
+Operator wrappers may also open local tunnels and populate
+`ENOCH_WORKER_PROBES_JSON` for direct worker diagnostics. Treat the generated
+worker-probe JSON as sensitive because it can include worker API tokens and
+private SSH targets.
 
 ## Tools
 
